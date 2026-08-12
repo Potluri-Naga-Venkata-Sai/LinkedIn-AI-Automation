@@ -1,19 +1,87 @@
-# 🤖 AI-Powered LinkedIn Content Engine with Human Approval
+# 🤖 AI-Powered LinkedIn Content Engine with Human-in-the-Loop Approval
 
-An automated end-to-end content creation and publishing pipeline built using **Make.com**, **Google Gemini AI**, **NewsAPI**, and **LinkedIn API**.
-
----
-
-## 🏗️ Architecture Overview
-
-### Scenario 1: Content Engine (Scheduler & AI Generation)
-Generates topics, fetches relevant news, ranks articles using AI, writes a structured LinkedIn post, and sends an approval request email.
-
-![Scenario 1 - Content Engine](scenario1-content-engine.png)
+An automated, end-to-end content creation pipeline built on **Make.com**. This workflow uses AI to curate industry news, draft high-converting LinkedIn posts, and send them to you for a 1-click email approval before safely publishing them to your feed.
 
 ---
 
-### Scenario 2: Approval Handler (Webhook & Publishing)
-Listens for user approval/rejection via webhook links in the email. Validates against duplicate posts using an internal Data Store and publishes approved posts to LinkedIn.
+## ✨ Features
 
-![Scenario 2 - Approval Handler](scenario2-approval-handler.png)
+*   **Automated News Curation:** Uses NewsAPI to fetch the latest articles based on a daily topic.
+*   **AI Quality Ranking:** Google Gemini evaluates and scores the articles, selecting only the highest-quality source.
+*   **AI Ghostwriter:** Gemini drafts a strictly formatted, scroll-stopping LinkedIn post featuring a strong hook, bullet points, and engagement questions.
+*   **Human-in-the-Loop (HITL):** Posts are *never* auto-published. You receive an HTML email containing the draft and 1-click `APPROVE` or `REJECT` buttons.
+*   **Anti-Duplicate Safety:** Built-in Make.com Data Store memory prevents accidental double-posting if an approval link is clicked twice.
+
+---
+
+## 🏗️ System Architecture
+
+This automation is split into two asynchronous Make.com scenarios for ultimate stability and security.
+
+### 1. Scenario 1: The Content Engine
+**Trigger:** Runs on a scheduled basis (e.g., Weekdays at 9:00 AM).
+**Workflow:**
+`Daily Topic` $\rightarrow$ `Fetch News (NewsAPI)` $\rightarrow$ `AI Ranking (Gemini)` $\rightarrow$ `Extract Best Article` $\rightarrow$ `AI Writer (Gemini)` $\rightarrow$ `Generate Approval ID` $\rightarrow$ `Send HTML Email`
+
+### 2. Scenario 2: The Approval Handler
+**Trigger:** Listens 24/7 via a Custom Webhook.
+**Workflow:**
+`Webhook receives decision` $\rightarrow$ `Router`
+*   **Path A (Approved):** `Check Data Store` $\rightarrow$ `Publish to LinkedIn` $\rightarrow$ `Save to Data Store (Prevent duplicates)`
+*   **Path B (Rejected):** `End execution`
+
+---
+
+## 📋 Prerequisites
+
+To run this workflow, you will need the following accounts and API keys:
+1.  **Make.com Account** (Free or Paid)
+2.  **NewsAPI Key** (Free tier available at newsapi.org)
+3.  **Google Gemini API Key** (Google AI Studio)
+4.  **Gmail Account** (For receiving approval emails)
+5.  **LinkedIn Account** (For publishing the posts)
+
+---
+
+## 🚀 Installation & Setup Guide
+
+### Step 1: Download the Blueprints
+Clone this repository or download the `.json` blueprint files provided in the source files.
+
+### Step 2: Set Up Scenario 2 (Approval Handler) First
+*We set this up first so we can generate the Webhook URL needed for Scenario 1.*
+1. Create a new scenario in Make.com and click **More (Three dots) > Import Blueprint**. Select the `scenario2-approval-handler.json` file.
+2. Click the **Webhook** module, click **Add**, and generate a new Custom Webhook. **Copy this URL.**
+3. Reconnect the **Gmail** and **LinkedIn** modules using your own accounts.
+4. Open the two **Data Store** modules. Create a new Data Store named `Published LinkedIn Posts` with a single primary key (e.g., `approval_id`). Ensure both modules point to this new store.
+5. Save the scenario and turn the scheduling toggle to **ON** (Immediately as data arrives).
+
+### Step 3: Set Up Scenario 1 (Content Engine)
+1. Create another new scenario in Make.com and import the `scenario1-content-engine.json` blueprint.
+2. Add your **NewsAPI** key to the HTTP/News fetch module.
+3. Authenticate the **Google Gemini AI** modules with your Google connection/API key.
+4. Authenticate the **Gmail** module.
+5. Inside the Gmail module's Raw HTML body, locate the `href` links for the APPROVE and REJECT buttons. Replace `YOUR_WEBHOOK_URL` with the URL you copied from Step 2.
+   * *Note: Ensure the `&post={{encodeURL(13.text)}}` mapping remains intact to safely pass the post data.*
+6. Save the scenario and turn the scheduling toggle to **ON** (e.g., Weekdays at 9:00 AM).
+
+---
+
+## 🛠️ How to Use It
+
+1. **Wait for the Draft:** At your scheduled time, the system will execute and draft a post.
+2. **Check Your Email:** You will receive an email titled `LinkedIn Post Approval Required`.
+3. **Review & Click:** Review the AI-generated post and the original article source. 
+   * Click **✅ APPROVE & PUBLISH** to instantly route the post to LinkedIn.
+   * Click **❌ REJECT** to discard the post.
+4. **Verify:** Check your LinkedIn feed to see the published content!
+
+---
+
+## ⚙️ Customization
+
+**Changing the Topic:**
+In Scenario 1, open the very first module (`Set Variable: Determine Daily Topic`). Change the variable value to whatever industry or niche you want the AI to research (e.g., `Artificial Intelligence`, `B2B SaaS Sales`, `Productivity Hacks`).
+
+**Changing the Tone:**
+In Scenario 1, open the second Gemini module (the Writer). Modify the System Prompt to adjust the formatting, tone, emojis, and hashtags used by the AI ghostwriter.
