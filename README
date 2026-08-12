@@ -1,12 +1,19 @@
-# AI-Powered LinkedIn Content Automation
+# 🤖 AI-Powered LinkedIn Content Engine with Human Approval
 
-This project automates the creation and publishing of LinkedIn posts using AI and Make.com.
+An automated end-to-end content creation and publishing pipeline built using **Make.com**, **Google Gemini AI**, **NewsAPI**, and **LinkedIn API**.
 
-## Features
+---
 
-- AI-generated posts
-- Scheduled automation
-- Topic management
-- Approval workflow
-- LinkedIn publishing
-- Analytics dashboard
+## 🏗️ Architecture Overview
+
+### Scenario 1: Content Engine (Scheduler & AI Generation)
+Generates topics, fetches relevant news, ranks articles using AI, writes a structured LinkedIn post, and sends an approval request email.
+
+![Scenario 1 - Content Engine](scenario1-content-engine.png)
+
+---
+
+### Scenario 2: Approval Handler (Webhook & Publishing)
+Listens for user approval/rejection via webhook links in the email. Validates against duplicate posts using an internal Data Store and publishes approved posts to LinkedIn.
+
+![Scenario 2 - Approval Handler](scenario2-approval-handler.png)
